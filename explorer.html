@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hogan Phenocam · Data Explorer</title>
+<meta name="description" content="Browse, search, and export the raw phenocam observation log." />
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#15803d" />
+<link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22V12M12 12c0-5 4-9 9-9 0 5-4 9-9 9Zm0 0C12 7 8 3 3 3c0 5 4 9 9 9Z"/></svg>
+      </span>
+      Hogan Phenocam
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="explorer.html" class="nav-link active">Data Explorer</a>
+      <a href="methodology.html" class="nav-link">Methodology</a>
+    </div>
+    <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme"></button>
+  </div>
+</nav>
+
+<header class="hero" style="padding-bottom:0;">
+  <div class="container">
+    <h1 style="font-size:28px;">Data Explorer</h1>
+    <p class="lead">Search, sort, and export every logged observation from <code>phenocam_data.csv</code>.</p>
+  </div>
+</header>
+
+<main class="container section">
+  <div class="card">
+    <div class="table-toolbar">
+      <div class="search-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="search-box" placeholder="Search by date (e.g. 2026-06) or value…" />
+      </div>
+      <label class="toggle-chip off" id="outliers-only-toggle"><input type="checkbox"><span class="dot" style="background:var(--red-500)"></span>outliers only</label>
+      <label class="toggle-chip off" id="hide-empty-toggle"><input type="checkbox"><span class="dot"></span>hide nighttime rows</label>
+      <button class="btn btn-primary" id="export-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+        Export CSV
+      </button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th data-key="timestamp">Timestamp <span class="arrow">↓</span></th>
+            <th data-key="gcc_mean">GCC mean</th>
+            <th data-key="gcc_median">GCC median</th>
+            <th data-key="gcc_90th">GCC 90th</th>
+            <th data-key="rcc_median">RCC median</th>
+            <th data-key="bcc_median">BCC median</th>
+            <th data-key="exg_median">ExG median</th>
+            <th data-key="is_outlier">Flag</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span id="row-count">— rows</span>
+      <div class="pager">
+        <button id="pg-first" title="First page">«</button>
+        <button id="pg-prev" title="Previous page">‹</button>
+        <span id="pg-label" style="padding:0 8px; font-weight:600;">Page 1</span>
+        <button id="pg-next" title="Next page">›</button>
+        <button id="pg-last" title="Last page">»</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      Hogan Phenocam Dashboard · College of the Holy Cross<br />
+      Built on the open-source
+      <a href="https://github.com/mostafajavadian/hogan-phenocam" target="_blank" rel="noopener">hogan-phenocam</a> pipeline.
+    </div>
+    <div class="footer-links">
+      <a href="methodology.html">Methodology</a>
+      <a href="index.html">Dashboard</a>
+      <a href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">Source</a>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="assets/js/explorer.js"></script>
+</body>
+</html>

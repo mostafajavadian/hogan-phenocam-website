@@ -1,0 +1,12 @@
+{
+  "name": "Hogan Phenocam Dashboard",
+  "short_name": "Phenocam",
+  "description": "Vegetation phenology dashboard for the Hogan Courtyard, College of the Holy Cross.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0b1210",
+  "theme_color": "#15803d",
+  "icons": [
+    { "src": "assets/img/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

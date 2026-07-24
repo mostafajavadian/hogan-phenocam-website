@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hogan Phenocam · Dashboard</title>
+<meta name="description" content="Automated, serverless vegetation phenology dashboard tracking canopy greenness (GCC) at the Hogan Courtyard, College of the Holy Cross." />
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#15803d" />
+<link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22V12M12 12c0-5 4-9 9-9 0 5-4 9-9 9Zm0 0C12 7 8 3 3 3c0 5 4 9 9 9Z"/></svg>
+      </span>
+      Hogan Phenocam
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Dashboard</a>
+      <a href="explorer.html" class="nav-link">Data Explorer</a>
+      <a href="methodology.html" class="nav-link">Methodology</a>
+    </div>
+    <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme"></button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="status-pill"><span class="status-dot"></span> Live pipeline · updates every 30 min</span>
+    <h1>Canopy phenology at Hogan Courtyard</h1>
+    <p class="lead">
+      A serverless computer-vision pipeline extracts the Green Chromatic Coordinate (GCC) from a live campus
+      webcam to track vegetation health and seasonal transitions at the College of the Holy Cross — entirely
+      free to run, with zero dedicated hosting.
+    </p>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="grid hero-grid">
+    <div class="card">
+      <div class="snapshot-frame">
+        <img id="snapshot-img" src="assets/img/hero-placeholder.svg" alt="Latest phenocam snapshot of the Hogan Courtyard canopy" />
+        <span class="snapshot-badge"><span class="status-dot"></span> ROI mask applied</span>
+        <div class="snapshot-timestamp">
+          <span id="snapshot-time">awaiting first capture</span>
+          <span id="snapshot-season">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid" style="align-content:start;">
+      <div class="card kpi">
+        <span class="kpi-label">Current GCC (90th)</span>
+        <span class="kpi-value" id="kpi-gcc">—</span>
+        <span class="kpi-delta flat" id="kpi-gcc-delta">no data yet</span>
+      </div>
+      <div class="card kpi">
+        <span class="kpi-label">24h Change</span>
+        <span class="kpi-value" id="kpi-change">—</span>
+        <span class="kpi-delta flat" id="kpi-change-note">vs. same time yesterday</span>
+      </div>
+      <div class="card kpi">
+        <span class="kpi-label">Season Phase</span>
+        <span class="kpi-value" id="kpi-season" style="font-family:var(--font-sans); font-size:19px;">—</span>
+        <span class="kpi-delta flat" id="kpi-season-note">—</span>
+      </div>
+      <div class="card kpi">
+        <span class="kpi-label">Observations Logged</span>
+        <span class="kpi-value" id="kpi-count">—</span>
+        <span class="kpi-delta flat" id="kpi-count-note">daylight readings, all-time</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Chromatic coordinate time series</div>
+          <div class="card-subtitle">Drag to pan, scroll to zoom. Toggle metrics below.</div>
+        </div>
+        <div class="controls-row">
+          <div class="seg" id="range-seg">
+            <button data-range="7d">7D</button>
+            <button data-range="30d" class="active">30D</button>
+            <button data-range="90d">90D</button>
+            <button data-range="ytd">YTD</button>
+            <button data-range="all">ALL</button>
+          </div>
+          <button class="btn btn-ghost" id="reset-zoom-btn" title="Reset zoom">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            Reset zoom
+          </button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="main-chart"></canvas>
+      </div>
+      <div class="chart-legend-note" id="metric-toggles">
+        <label class="toggle-chip metric-gcc" data-metric="gcc_90th"><input type="checkbox" checked><span class="dot"></span>GCC 90th pct</label>
+        <label class="toggle-chip metric-gcc off" data-metric="gcc_mean"><input type="checkbox"><span class="dot"></span>GCC mean</label>
+        <label class="toggle-chip metric-rcc" data-metric="rcc_median"><input type="checkbox" checked><span class="dot"></span>RCC median</label>
+        <label class="toggle-chip metric-bcc off" data-metric="bcc_median"><input type="checkbox"><span class="dot"></span>BCC median</label>
+        <label class="toggle-chip metric-exg off" data-metric="exg_median"><input type="checkbox"><span class="dot"></span>ExG median</label>
+        <label class="toggle-chip" style="margin-left:auto;" id="smoothing-toggle"><input type="checkbox" checked><span class="dot" style="background:var(--text-faint)"></span>10-pt smoothing</label>
+        <label class="toggle-chip" id="outlier-toggle"><input type="checkbox"><span class="dot" style="background:var(--red-500)"></span>show flagged outliers</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Summary statistics — selected range</div>
+      </div>
+      <div class="stat-strip">
+        <div class="stat-cell"><div class="label">Minimum</div><div class="value" id="stat-min">—</div></div>
+        <div class="stat-cell"><div class="label">Maximum</div><div class="value" id="stat-max">—</div></div>
+        <div class="stat-cell"><div class="label">Mean</div><div class="value" id="stat-mean">—</div></div>
+        <div class="stat-cell"><div class="label">Std. Dev.</div><div class="value" id="stat-std">—</div></div>
+        <div class="stat-cell"><div class="label">Readings</div><div class="value" id="stat-n">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="section-head">
+      <div>
+        <h2>Year-over-year seasonal comparison</h2>
+        <p>Daily GCC (90th percentile) plotted against day-of-year, overlaid across all recorded years.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chart-wrap">
+        <canvas id="seasonal-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      Hogan Phenocam Dashboard · College of the Holy Cross<br />
+      Built on the open-source
+      <a href="https://github.com/mostafajavadian/hogan-phenocam" target="_blank" rel="noopener">hogan-phenocam</a> pipeline.
+    </div>
+    <div class="footer-links">
+      <a href="methodology.html">Methodology</a>
+      <a href="explorer.html">Data Explorer</a>
+      <a href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">Source</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

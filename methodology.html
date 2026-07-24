@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hogan Phenocam · Methodology</title>
+<meta name="description" content="How the Hogan Phenocam pipeline extracts vegetation indices from a live webcam and detects outliers." />
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#15803d" />
+<link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22V12M12 12c0-5 4-9 9-9 0 5-4 9-9 9Zm0 0C12 7 8 3 3 3c0 5 4 9 9 9Z"/></svg>
+      </span>
+      Hogan Phenocam
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="explorer.html" class="nav-link">Data Explorer</a>
+      <a href="methodology.html" class="nav-link active">Methodology</a>
+    </div>
+    <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme"></button>
+  </div>
+</nav>
+
+<header class="hero" style="padding-bottom:0;">
+  <div class="container">
+    <h1 style="font-size:28px;">Methodology</h1>
+    <p class="lead">The science and engineering behind a zero-cost, serverless phenocam pipeline.</p>
+  </div>
+</header>
+
+<main class="container section">
+
+  <div class="split-2" style="align-items:start;">
+    <div>
+      <h2 style="font-size:19px;">Vegetation indices</h2>
+      <p style="color:var(--text-muted); font-size:13.5px; max-width:60ch;">
+        Every captured frame is decomposed into its red, green, and blue channels. Four chromatic
+        indices are then computed over the pixels inside a hand-drawn canopy region-of-interest (ROI) mask,
+        which excludes brick buildings, sky, and pavement from the signal.
+      </p>
+
+      <div class="formula-card"><span class="name">GCC</span> = G / (R + G + B)</div>
+      <div class="formula-card"><span class="name">RCC</span> = R / (R + G + B)</div>
+      <div class="formula-card"><span class="name">BCC</span> = B / (R + G + B)</div>
+      <div class="formula-card"><span class="name">ExG</span> = 2G − R − B</div>
+
+      <p style="color:var(--text-muted); font-size:13.5px; max-width:60ch;">
+        <strong>GCC</strong> is the primary greenness signal used to track canopy health and seasonal
+        transitions — it rises during spring green-up, plateaus at peak summer canopy, and falls during
+        autumn senescence. <strong>RCC</strong> conversely tracks reddening (useful for autumn color change),
+        while <strong>ExG</strong> provides a channel-difference index that's less sensitive to overall
+        brightness than GCC alone.
+      </p>
+    </div>
+
+    <div>
+      <h2 style="font-size:19px;">Outlier detection</h2>
+      <p style="color:var(--text-muted); font-size:13.5px; max-width:60ch;">
+        Lighting artifacts — glare, fog, raindrops on the lens, motion blur — can produce spurious
+        readings. Rather than a fixed threshold, the pipeline recomputes an <strong>interquartile-range
+        (IQR) fence</strong> independently for each calendar day:
+      </p>
+      <div class="formula-card" style="font-size:13px;">
+Q1, Q3 = 25th/75th percentile of gcc_90th for the day
+IQR    = Q3 − Q1
+flag if value &lt; Q1 − 1.5·IQR  or  value &gt; Q3 + 1.5·IQR
+      </div>
+      <p style="color:var(--text-muted); font-size:13.5px; max-width:60ch;">
+        Days need at least 4 readings before fencing is applied. Flagged rows are retained in the dataset
+        (never deleted) and marked <code>is_outlier = 1</code>, so the dashboard can show or hide them on demand —
+        see the <a href="index.html">Dashboard</a> toggle.
+      </p>
+
+      <h2 style="font-size:19px; margin-top:28px;">Daylight filtering</h2>
+      <p style="color:var(--text-muted); font-size:13.5px; max-width:60ch;">
+        Each capture is timestamped against solar elevation at Worcester, MA (42.2626°N, 71.8023°W).
+        Frames captured when the sun is below 5° elevation are logged as empty rows rather than analyzed,
+        since low-light frames carry no reliable phenological signal but the timestamp is still useful for
+        gap tracking.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-head" style="margin-top:40px;">
+    <div>
+      <h2>Pipeline architecture</h2>
+      <p>Fully serverless — a scheduled GitHub Actions job is the only compute this project uses.</p>
+    </div>
+  </div>
+
+  <div class="card card-pad">
+    <svg class="pipeline-diagram" viewBox="0 0 1000 210" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-sans), sans-serif">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+        </marker>
+      </defs>
+      <g font-size="12.5" fill="var(--text)">
+        <!-- nodes -->
+        <g>
+          <rect x="10" y="70" width="150" height="70" rx="12" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="85" y="98" text-anchor="middle" font-weight="700">GitHub Actions</text>
+          <text x="85" y="116" text-anchor="middle" fill="var(--text-muted)" font-size="11">cron · every 30 min</text>
+        </g>
+        <g>
+          <rect x="210" y="70" width="150" height="70" rx="12" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="285" y="98" text-anchor="middle" font-weight="700">Playwright</text>
+          <text x="285" y="116" text-anchor="middle" fill="var(--text-muted)" font-size="11">intercepts .m3u8 stream</text>
+        </g>
+        <g>
+          <rect x="410" y="70" width="150" height="70" rx="12" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="485" y="98" text-anchor="middle" font-weight="700">OpenCV</text>
+          <text x="485" y="116" text-anchor="middle" fill="var(--text-muted)" font-size="11">frame capture + ROI mask</text>
+        </g>
+        <g>
+          <rect x="610" y="70" width="150" height="70" rx="12" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="685" y="98" text-anchor="middle" font-weight="700">Index calc</text>
+          <text x="685" y="116" text-anchor="middle" fill="var(--text-muted)" font-size="11">GCC / RCC / BCC / ExG</text>
+        </g>
+        <g>
+          <rect x="810" y="70" width="180" height="70" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="900" y="98" text-anchor="middle" font-weight="700" fill="var(--accent-strong)">phenocam_data.csv</text>
+          <text x="900" y="116" text-anchor="middle" fill="var(--accent-strong)" font-size="11">committed back to repo</text>
+        </g>
+        <g>
+          <rect x="810" y="10" width="180" height="46" rx="10" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="900" y="38" text-anchor="middle" font-weight="700" font-size="12">GitHub Pages</text>
+        </g>
+        <g>
+          <rect x="410" y="160" width="150" height="40" rx="10" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="485" y="185" text-anchor="middle" font-weight="700" font-size="12">IQR outlier flag</text>
+        </g>
+
+        <!-- edges -->
+        <line x1="160" y1="105" x2="208" y2="105" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <line x1="360" y1="105" x2="408" y2="105" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <line x1="560" y1="105" x2="608" y2="105" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <line x1="760" y1="105" x2="808" y2="105" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <line x1="900" y1="70" x2="900" y2="56" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <line x1="685" y1="140" x2="530" y2="158" stroke="var(--text-faint)" stroke-width="1.4" marker-end="url(#arrow)"/>
+        <line x1="485" y1="160" x2="810" y2="120" stroke="var(--text-faint)" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="section-head" style="margin-top:40px;">
+    <div>
+      <h2>Request lifecycle</h2>
+    </div>
+  </div>
+  <ul class="step-list">
+    <li>
+      <span class="step-num">1</span>
+      <div><h4>Trigger</h4><p>A cron-scheduled workflow wakes every 30 minutes and checks out the repository.</p></div>
+    </li>
+    <li>
+      <span class="step-num">2</span>
+      <div><h4>Stream interception</h4><p>A headless Chromium browser loads the public HDOnTap webcam page; Playwright listens for the token-protected <code>.m3u8</code> playlist request and captures its URL.</p></div>
+    </li>
+    <li>
+      <span class="step-num">3</span>
+      <div><h4>Frame extraction</h4><p>OpenCV opens the stream URL directly and reads a single video frame.</p></div>
+    </li>
+    <li>
+      <span class="step-num">4</span>
+      <div><h4>Solar-elevation gate</h4><p>If the sun is below 5° over Worcester, MA, the frame is skipped and an empty timestamp row is logged instead.</p></div>
+    </li>
+    <li>
+      <span class="step-num">5</span>
+      <div><h4>Index calculation</h4><p>The canopy ROI mask isolates vegetation pixels; GCC, RCC, BCC, and ExG are computed and appended to <code>phenocam_data.csv</code>.</p></div>
+    </li>
+    <li>
+      <span class="step-num">6</span>
+      <div><h4>Outlier re-scan</h4><p>The full day's readings are re-evaluated with the IQR method so flags stay consistent as new data arrives.</p></div>
+    </li>
+    <li>
+      <span class="step-num">7</span>
+      <div><h4>Publish</h4><p>The workflow commits the updated CSV and annotated snapshot back to the repository; GitHub Pages serves the static dashboard directly from the same repo — no server, no database.</p></div>
+    </li>
+  </ul>
+
+  <div class="section-head" style="margin-top:40px;">
+    <div><h2>Tech stack</h2></div>
+  </div>
+  <div class="tech-grid">
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2Z"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10Z"/></svg></div>
+      <h4>Python &amp; OpenCV</h4>
+      <p>Frame decoding, color-channel math, and ROI masking.</p>
+    </div>
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8M12 18v2"/></svg></div>
+      <h4>Playwright</h4>
+      <p>Headless-browser network interception for the live stream URL.</p>
+    </div>
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+      <h4>GitHub Actions</h4>
+      <p>Cron-scheduled, serverless compute — zero hosting cost.</p>
+    </div>
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-6 4 4 4-8"/></svg></div>
+      <h4>Chart.js</h4>
+      <p>Interactive, zoomable time-series &amp; seasonal-overlay charts.</p>
+    </div>
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg></div>
+      <h4>Pandas &amp; NumPy</h4>
+      <p>Daily IQR outlier detection and time-series bookkeeping.</p>
+    </div>
+    <div class="card tech-card">
+      <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg></div>
+      <h4>GitHub Pages</h4>
+      <p>Static hosting for this dashboard, deployed straight from the repo.</p>
+    </div>
+  </div>
+
+  <div class="section-head" style="margin-top:40px;">
+    <div><h2>Credits</h2></div>
+  </div>
+  <p style="color:var(--text-muted); font-size:13.5px; max-width:70ch;">
+    This dashboard is a redesigned, feature-expanded front end for the
+    <a href="https://github.com/mostafajavadian/hogan-phenocam" target="_blank" rel="noopener">hogan-phenocam</a>
+    data pipeline, which monitors a public webcam overlooking the Hogan Courtyard at the
+    <a href="https://www.holycross.edu" target="_blank" rel="noopener">College of the Holy Cross</a>. Live imagery is
+    sourced from <a href="https://hdontap.com" target="_blank" rel="noopener">HDOnTap</a>.
+  </p>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      Hogan Phenocam Dashboard · College of the Holy Cross<br />
+      Built on the open-source
+      <a href="https://github.com/mostafajavadian/hogan-phenocam" target="_blank" rel="noopener">hogan-phenocam</a> pipeline.
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Dashboard</a>
+      <a href="explorer.html">Data Explorer</a>
+      <a href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">Source</a>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+  import { initTheme, toggleTheme } from "./assets/js/theme.js";
+  initTheme();
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+</script>
+</body>
+</html>
