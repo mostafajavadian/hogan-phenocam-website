@@ -132,7 +132,17 @@ function render() {
   buildSeasonalChart(document.getElementById("seasonal-chart"), overlay);
 }
 
+function loadSnapshot() {
+  const img = document.getElementById("snapshot-img");
+  const fallback = img.dataset.fallback;
+  const probe = new Image();
+  probe.onload = () => { img.src = `data/latest_image.jpg?t=${Date.now()}`; };
+  probe.onerror = () => { img.src = fallback; };
+  probe.src = `data/latest_image.jpg?t=${Date.now()}`;
+}
+
 async function boot() {
+  loadSnapshot();
   try {
     allRows = await loadDataset();
     render();

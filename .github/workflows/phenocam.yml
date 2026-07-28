@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -34,6 +34,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/phenocam_data.csv data/latest_image.jpg
+          git add data/phenocam_data.csv
+          git add data/latest_image.jpg 2>/dev/null || true
           git commit -m "chore: automated phenology update [skip ci]" || echo "No changes to commit"
           git push

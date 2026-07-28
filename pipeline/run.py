@@ -62,21 +62,22 @@ async def main() -> None:
         log.warning("[%s] No frame captured; skipping this cycle.", timestamp_str)
         return
 
-    if not daylight:
+    mask = load_canopy_mask(frame.shape[:2])
+
+    if daylight:
+        stats = calculate_indices(frame, mask)
+        if stats is None:
+            log.warning("[%s] Canopy mask matched no pixels. Logging empty row.", timestamp_str)
+            append_row(timestamp_str, None)
+        else:
+            log.info("[%s] Daylight (elev %.1f°). GCC 90th: %.4f", timestamp_str, sun_elev, stats["gcc_90th"])
+            append_row(timestamp_str, stats)
+            recompute_outliers()
+    else:
         log.info("[%s] Below solar elevation threshold (%.1f°). Logging empty row.", timestamp_str, sun_elev)
         append_row(timestamp_str, None)
-        return
 
-    mask = load_canopy_mask(frame.shape[:2])
-    stats = calculate_indices(frame, mask)
-    if stats is None:
-        log.warning("[%s] Canopy mask matched no pixels; skipping.", timestamp_str)
-        return
-
-    log.info("[%s] Daylight (elev %.1f°). GCC 90th: %.4f", timestamp_str, sun_elev, stats["gcc_90th"])
-    append_row(timestamp_str, stats)
-    recompute_outliers()
-
+    # Save a snapshot on every successful capture, day or night, so the dashboard always has a recent image.
     annotated = annotate_mask_contours(frame, mask)
     config.LATEST_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(config.LATEST_IMAGE_PATH), annotated)
