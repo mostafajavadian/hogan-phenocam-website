@@ -16,22 +16,38 @@ if sys.platform == "win32":
 log = logging.getLogger(__name__)
 
 
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
 async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
-    """Loads the public webcam page and intercepts its token-protected HLS playlist URL."""
+    """Loads the public webcam page and intercepts its token-protected HLS playlist URL.
+
+    Retries with a fresh page load if the first attempt doesn't see any playlist
+    request in time — CI network conditions are slower and less consistent than local dev.
+    """
     m3u8_url = None
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        page = await browser.new_page(user_agent=USER_AGENT)
 
         def handle_response(response):
             nonlocal m3u8_url
-            if "chunklist.m3u8" in response.url or "playlist.m3u8" in response.url:
+            if ".m3u8" in response.url:
                 m3u8_url = response.url
 
         page.on("response", handle_response)
-        await page.goto(page_url)
-        await page.wait_for_timeout(config.STREAM_LOAD_TIMEOUT_MS)
+
+        for attempt in range(config.STREAM_LOAD_RETRIES):
+            await page.goto(page_url, wait_until="domcontentloaded")
+            await page.wait_for_timeout(config.STREAM_LOAD_TIMEOUT_MS)
+            if m3u8_url:
+                break
+            log.info("No playlist request seen on attempt %d/%d.", attempt + 1, config.STREAM_LOAD_RETRIES)
+
         await browser.close()
 
     return m3u8_url
