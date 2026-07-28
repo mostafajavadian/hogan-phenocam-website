@@ -29,6 +29,7 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
     request in time — CI network conditions are slower and less consistent than local dev.
     """
     m3u8_url = None
+    seen_urls: list[str] = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -36,6 +37,7 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
 
         def handle_response(response):
             nonlocal m3u8_url
+            seen_urls.append(response.url)
             if ".m3u8" in response.url:
                 m3u8_url = response.url
 
@@ -49,6 +51,13 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
             log.info("No playlist request seen on attempt %d/%d.", attempt + 1, config.STREAM_LOAD_RETRIES)
 
         await browser.close()
+
+    if not m3u8_url:
+        media_like = [u for u in seen_urls if any(ext in u for ext in (".m3u8", ".mpd", ".ts", ".mp4", "/hls/", "/stream"))]
+        sample = media_like or seen_urls[-15:]
+        log.info("Diagnostic — %d total responses seen, showing up to 15 media/last URLs:", len(seen_urls))
+        for url in sample[:15]:
+            log.info("  %s", url)
 
     return m3u8_url
 
