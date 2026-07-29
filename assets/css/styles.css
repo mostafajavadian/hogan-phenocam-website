@@ -792,24 +792,7 @@ table.data-table td.empty-cell { color: var(--text-faint); }
   clip: rect(0 0 0 0);
 }
 
-/* ---------- Skip link + focus ---------- */
-.skip-link {
-  position: absolute;
-  left: 12px;
-  top: -48px;
-  background: var(--accent);
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 700;
-  z-index: 100;
-  transition: top var(--transition);
-}
-.skip-link:focus {
-  top: 12px;
-}
-
+/* ---------- Focus ---------- */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
