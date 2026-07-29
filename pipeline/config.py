@@ -2,7 +2,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-WEBCAM_PAGE_URL = "https://hdontap.com/stream/178090/holy-cross-hogan-courtyard-live-webcam/"
+WEBCAM_STREAM_ID = "178090"
+WEBCAM_PAGE_URL = f"https://hdontap.com/stream/{WEBCAM_STREAM_ID}/holy-cross-hogan-courtyard-live-webcam/"
 STREAM_LOAD_TIMEOUT_MS = 5000
 
 TIMEZONE = "US/Eastern"

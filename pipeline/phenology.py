@@ -11,9 +11,16 @@ from . import config
 
 
 def load_canopy_mask(image_shape: tuple[int, int], mask_path=config.MASK_PATH) -> np.ndarray:
+    """Loads the ROI mask, resizing it to match the captured frame if needed.
+
+    The frame may come from the full-resolution HLS stream or from a lower-resolution
+    snapshot thumbnail fallback, so the mask can't be assumed to already match its size.
+    """
     mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
     if mask is None:
         return np.full(image_shape, 255, dtype=np.uint8)
+    if mask.shape != tuple(image_shape):
+        mask = cv2.resize(mask, (image_shape[1], image_shape[0]), interpolation=cv2.INTER_NEAREST)
     return mask
 
 
