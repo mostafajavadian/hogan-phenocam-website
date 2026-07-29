@@ -94,6 +94,24 @@ function updateKpis(rows) {
 
   const validCount = rows.filter(hasReading).length;
   document.getElementById("kpi-count").textContent = validCount.toLocaleString();
+
+  updateFreshness(latest);
+}
+
+function updateFreshness(latest) {
+  const badge = document.getElementById("freshness-badge");
+  const text = document.getElementById("freshness-text");
+  if (!latest) {
+    badge.className = "freshness very-stale";
+    text.textContent = "no data";
+    return;
+  }
+  const ageHours = (Date.now() - latest.date.getTime()) / 3600000;
+  let tier = "fresh";
+  if (ageHours > 6) tier = "very-stale";
+  else if (ageHours > 1.5) tier = "stale";
+  badge.className = `freshness ${tier}`;
+  text.textContent = `updated ${timeAgo(latest.date)}`;
 }
 
 function updateStatStrip(rows) {

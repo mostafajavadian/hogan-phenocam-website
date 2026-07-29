@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mostafajavadian.github.io/hogan-phenocam-website/sitemap.xml

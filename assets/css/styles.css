@@ -792,7 +792,95 @@ table.data-table td.empty-cell { color: var(--text-faint); }
   clip: rect(0 0 0 0);
 }
 
+/* ---------- Skip link + focus ---------- */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 100;
+  transition: top var(--transition);
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+th:focus-visible,
+label:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- Freshness badge ---------- */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.freshness .dot { width: 7px; height: 7px; border-radius: 999px; }
+.freshness.fresh { background: var(--accent-soft); color: var(--accent-strong); }
+.freshness.fresh .dot { background: var(--green-500); }
+.freshness.stale { background: rgba(245, 158, 11, .14); color: var(--amber-500); }
+.freshness.stale .dot { background: var(--amber-500); }
+.freshness.very-stale { background: rgba(239, 68, 68, .12); color: var(--red-500); }
+.freshness.very-stale .dot { background: var(--red-500); }
+
+/* ---------- Footer credit ---------- */
+.footer-credit {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.footer-credit a { color: var(--text-faint); text-decoration: underline; text-decoration-color: var(--border); }
+.footer-credit a:hover { color: var(--text-muted); }
+
+/* ---------- Mobile nav ---------- */
+.nav-toggle {
+  display: none;
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.nav-toggle svg { width: 18px; height: 18px; }
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu .nav-link {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+}
+.mobile-menu .gh-link {
+  margin-top: 6px;
+  justify-content: center;
+}
+
 @media (max-width: 700px) {
   .nav-links { display: none; }
-  .gh-link span { display: none; }
+  .gh-link { display: none; }
+  .nav-toggle { display: flex; }
 }

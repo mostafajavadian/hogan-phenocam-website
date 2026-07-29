@@ -8,9 +8,19 @@
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#15803d" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Hogan Phenocam · Dashboard" />
+<meta property="og:description" content="Automated, serverless vegetation phenology dashboard tracking canopy greenness (GCC) at the Hogan Courtyard, College of the Holy Cross." />
+<meta property="og:image" content="assets/img/og-image.svg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Hogan Phenocam · Dashboard" />
+<meta name="twitter:description" content="Live canopy greenness (GCC) tracking at the Hogan Courtyard, College of the Holy Cross." />
+<meta name="twitter:image" content="assets/img/og-image.svg" />
 <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
+
+<a href="#main-content" class="skip-link">Skip to content</a>
 
 <nav class="nav">
   <div class="container nav-inner">
@@ -21,7 +31,7 @@
       Hogan Phenocam
     </a>
     <div class="nav-links">
-      <a href="index.html" class="nav-link active">Dashboard</a>
+      <a href="index.html" class="nav-link active" aria-current="page">Dashboard</a>
       <a href="explorer.html" class="nav-link">Data Explorer</a>
       <a href="methodology.html" class="nav-link">Methodology</a>
     </div>
@@ -30,6 +40,18 @@
       <span>GitHub</span>
     </a>
     <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme"></button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="nav-link active" aria-current="page">Dashboard</a>
+    <a href="explorer.html" class="nav-link">Data Explorer</a>
+    <a href="methodology.html" class="nav-link">Methodology</a>
+    <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      <span>GitHub</span>
+    </a>
   </div>
 </nav>
 
@@ -45,7 +67,7 @@
   </div>
 </header>
 
-<main class="container">
+<main class="container" id="main-content">
 
   <section class="grid hero-grid">
     <div class="card">
@@ -63,7 +85,7 @@
       <div class="card kpi">
         <span class="kpi-label">Current GCC (90th)</span>
         <span class="kpi-value" id="kpi-gcc">—</span>
-        <span class="kpi-delta flat" id="kpi-gcc-delta">no data yet</span>
+        <span class="freshness fresh" id="freshness-badge" style="width:fit-content;"><span class="dot"></span><span id="freshness-text">checking…</span></span>
       </div>
       <div class="card kpi">
         <span class="kpi-label">24h Change</span>
@@ -156,6 +178,7 @@
       Hogan Phenocam Dashboard · College of the Holy Cross<br />
       Built on the open-source
       <a href="https://github.com/mostafajavadian/hogan-phenocam" target="_blank" rel="noopener">hogan-phenocam</a> pipeline.
+      <div class="footer-credit">Maintained by Mostafa Javadian · <a href="mailto:mjavadian@holycross.edu">mjavadian@holycross.edu</a></div>
     </div>
     <div class="footer-links">
       <a href="methodology.html">Methodology</a>
@@ -168,6 +191,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script type="module">
+  import { initMobileNav } from "./assets/js/nav.js";
+  initMobileNav();
+</script>
 <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
