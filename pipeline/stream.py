@@ -43,12 +43,13 @@ AD_BLOCK_HOSTS = (
 async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
     """Loads the public webcam page and intercepts its token-protected HLS playlist URL.
 
-    Ad/tracking hosts are blocked so the player's ad waterfall doesn't stall out the
-    actual stream request; a single longer wait is used instead of reloading, since a
-    reload just restarts the waterfall from scratch instead of letting it resolve.
+    Ad/tracking hosts are blocked so a failing ad waterfall doesn't stall out the actual
+    stream request. Each attempt reloads the page fresh, since the ad server's response
+    is randomized per load — a few independent short attempts beat one long wait.
     """
     m3u8_url = None
     seen_urls: list[str] = []
+    console_msgs: list[str] = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -69,21 +70,32 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
                 m3u8_url = response.url
 
         page.on("response", handle_response)
+        page.on("console", lambda msg: console_msgs.append(f"[{msg.type}] {msg.text}"))
+        page.on("pageerror", lambda exc: console_msgs.append(f"[pageerror] {exc}"))
 
-        await page.goto(page_url, wait_until="domcontentloaded")
-        for _ in range(config.STREAM_LOAD_RETRIES):
+        for attempt in range(config.STREAM_LOAD_RETRIES):
+            seen_urls.clear()
+            console_msgs.clear()
+            await page.goto(page_url, wait_until="domcontentloaded")
             await page.wait_for_timeout(config.STREAM_LOAD_TIMEOUT_MS)
             if m3u8_url:
                 break
+            log.info("No playlist request seen on attempt %d/%d (%d responses).", attempt + 1, config.STREAM_LOAD_RETRIES, len(seen_urls))
 
         await browser.close()
 
     if not m3u8_url:
-        media_like = [u for u in seen_urls if any(ext in u for ext in (".m3u8", ".mpd", ".ts", ".mp4", "/hls/", "/stream"))]
-        sample = media_like or seen_urls[-15:]
-        log.info("Diagnostic — %d total responses seen, showing up to 15 media/last URLs:", len(seen_urls))
-        for url in sample[:15]:
+        video_like = [u for u in seen_urls if any(ext in u for ext in (".m3u8", ".mpd", ".ts", ".mp4"))]
+        log.info("Diagnostic — %d responses on final attempt, %d video-like:", len(seen_urls), len(video_like))
+        for url in video_like[:10]:
+            log.info("  [video] %s", url)
+        log.info("Diagnostic — last 15 responses of any kind:")
+        for url in seen_urls[-15:]:
             log.info("  %s", url)
+        if console_msgs:
+            log.info("Diagnostic — console/page errors:")
+            for msg in console_msgs[-15:]:
+                log.info("  %s", msg)
 
     return m3u8_url
 

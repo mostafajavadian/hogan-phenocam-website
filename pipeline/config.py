@@ -3,8 +3,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 WEBCAM_PAGE_URL = "https://hdontap.com/stream/178090/holy-cross-hogan-courtyard-live-webcam/"
-STREAM_LOAD_TIMEOUT_MS = 12000
-STREAM_LOAD_RETRIES = 2
+STREAM_LOAD_TIMEOUT_MS = 8000
+STREAM_LOAD_RETRIES = 4
 
 TIMEZONE = "US/Eastern"
 LOCATION_NAME = "Worcester"
