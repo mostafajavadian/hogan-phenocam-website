@@ -1,5 +1,6 @@
-import { loadDataset, filterByRange, movingAverage, summaryStats, latestReading, readingHoursAgo, seasonPhase, seasonalOverlay, hasReading, timeAgo } from "./data.js";
-import { buildMainChart, buildSeasonalChart, resetZoom } from "./charts.js";
+import { loadDataset, filterByRange, movingAverage, summaryStats, latestReading, readingHoursAgo, seasonPhase, seasonalOverlay, detectPhenologyEvents, hasReading, timeAgo } from "./data.js";
+import { buildMainChart, buildSeasonalChart, buildWeatherChart, exportChartAsPng, resetZoom } from "./charts.js";
+import { fetchWeather } from "./weather.js";
 import { initTheme, toggleTheme } from "./theme.js";
 
 initTheme();
@@ -61,6 +62,8 @@ document.getElementById("outlier-toggle").addEventListener("click", (e) => {
 });
 
 document.getElementById("reset-zoom-btn").addEventListener("click", resetZoom);
+document.getElementById("export-chart-png-btn").addEventListener("click", () => exportChartAsPng("main", `hogan-phenocam-gcc-${state.range}.png`));
+document.getElementById("export-seasonal-png-btn").addEventListener("click", () => exportChartAsPng("seasonal", "hogan-phenocam-seasonal.png"));
 
 function fmt(n, digits = 4) {
   return n === null || n === undefined || Number.isNaN(n) ? "—" : n.toFixed(digits);
@@ -136,6 +139,57 @@ function buildSeriesForMetric(rows, metric) {
   return points.map((p, i) => ({ x: p.x, y: smoothed[i] }));
 }
 
+function fmtDate(date) {
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function renderPhenologyEvents(rows) {
+  const events = detectPhenologyEvents(rows, "gcc_90th");
+  const tbody = document.getElementById("phenology-events-body");
+
+  if (!events.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:24px;" class="empty-cell">Not enough data yet.</td></tr>`;
+    return events;
+  }
+
+  tbody.innerHTML = events
+    .map((ev) => {
+      if (ev.insufficientData) {
+        return `<tr><td>${ev.year}</td><td colspan="3" class="empty-cell">Not enough daily readings yet</td></tr>`;
+      }
+      return `<tr>
+        <td>${ev.year}</td>
+        <td>${ev.greenup ? fmtDate(ev.greenup) : '<span class="empty-cell">—</span>'}</td>
+        <td>${ev.senescence ? fmtDate(ev.senescence) : '<span class="empty-cell">—</span>'}</td>
+        <td>${ev.seasonLengthDays !== null ? `${ev.seasonLengthDays} days` : '<span class="empty-cell">—</span>'}</td>
+      </tr>`;
+    })
+    .join("");
+
+  return events;
+}
+
+async function updateWeatherChart(rangeRows) {
+  const wrap = document.getElementById("weather-chart-wrap");
+  const empty = document.getElementById("weather-empty");
+  if (!rangeRows.length) {
+    wrap.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+
+  const weather = await fetchWeather(rangeRows[0].date, rangeRows[rangeRows.length - 1].date);
+  if (!weather.length) {
+    wrap.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+
+  wrap.style.display = "";
+  empty.style.display = "none";
+  buildWeatherChart(document.getElementById("weather-chart"), weather);
+}
+
 function render() {
   const rangeRows = filterByRange(allRows, state.range);
   updateKpis(rangeRows.length ? rangeRows : allRows);
@@ -146,8 +200,11 @@ function render() {
 
   buildMainChart(document.getElementById("main-chart"), seriesByMetric, state.metrics);
 
+  const events = renderPhenologyEvents(allRows);
   const overlay = seasonalOverlay(allRows, "gcc_90th");
-  buildSeasonalChart(document.getElementById("seasonal-chart"), overlay);
+  buildSeasonalChart(document.getElementById("seasonal-chart"), overlay, events);
+
+  updateWeatherChart(rangeRows);
 }
 
 function loadSnapshot() {

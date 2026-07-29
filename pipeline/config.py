@@ -18,6 +18,11 @@ CSV_PATH = DATA_DIR / "phenocam_data.csv"
 MASK_PATH = REPO_ROOT / "pipeline" / "canopy_mask.png"
 LATEST_IMAGE_PATH = DATA_DIR / "latest_image.jpg"
 
+GALLERY_DIR = DATA_DIR / "gallery"
+GALLERY_INDEX_PATH = GALLERY_DIR / "index.json"
+GALLERY_WINDOW_START_HOUR = 9
+GALLERY_WINDOW_END_HOUR = 16
+
 ARCHIVE_DIR = REPO_ROOT / "phenology_images"
 
 CSV_COLUMNS = [

@@ -12,7 +12,7 @@ import pandas as pd
 import pytz
 from datetime import datetime
 
-from . import config, stream
+from . import config, gallery, stream
 from .outliers import flag_daily_outliers
 from .phenology import annotate_mask_contours, calculate_indices, is_daylight, load_canopy_mask
 
@@ -81,6 +81,8 @@ async def main() -> None:
     annotated = annotate_mask_contours(frame, mask)
     config.LATEST_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(config.LATEST_IMAGE_PATH), annotated)
+
+    gallery.maybe_save_daily_snapshot(annotated, now)
 
 
 if __name__ == "__main__":

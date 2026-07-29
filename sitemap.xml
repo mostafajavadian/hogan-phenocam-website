@@ -11,6 +11,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://mostafajavadian.github.io/hogan-phenocam-website/gallery.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://mostafajavadian.github.io/hogan-phenocam-website/methodology.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

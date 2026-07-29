@@ -13,7 +13,14 @@ The original project logs the **Green Chromatic Coordinate (GCC)** of a live cam
 repo keeps that pipeline's core science intact but rebuilds the front end from scratch and cleans up
 the backend into a proper Python package:
 
-- **Multi-page dashboard** — Dashboard, Data Explorer, and Methodology, instead of a single page.
+- **Multi-page dashboard** — Dashboard, Data Explorer, Gallery, and Methodology, instead of a single page.
+- **Green-up / senescence detection** — auto-detects spring and autumn transition dates per year from
+  a 50%-of-amplitude threshold crossing, surfaced as both a table and dashed chart annotations.
+- **Weather overlay** — daily temperature/precipitation for Worcester, MA (via Open-Meteo, no API key)
+  plotted alongside the selected date range for scientific context.
+- **Snapshot gallery / timelapse** — one canopy image archived per day; scrub through or auto-play.
+- **Chart export to PNG**, next to the existing filtered CSV export.
+- **Camera location map** (Leaflet/OpenStreetMap) on the Methodology page.
 - **Five vegetation indices, not one** — GCC (mean/median/90th pct), RCC, BCC, ExG, toggled independently.
 - **Zoomable, pannable time series** with adjustable date range (7D / 30D / 90D / YTD / All) and
   optional 10-point moving-average smoothing.
@@ -33,25 +40,31 @@ the backend into a proper Python package:
 hogan-phenocam-website/
 ├── index.html              Dashboard
 ├── explorer.html           Data explorer
-├── methodology.html        Science + architecture writeup
+├── gallery.html            Daily snapshot timelapse
+├── methodology.html        Science + architecture writeup (incl. camera location map)
 ├── 404.html
 ├── manifest.json           PWA manifest
 ├── assets/
 │   ├── css/styles.css      Design system (light + dark themes)
 │   ├── js/
-│   │   ├── data.js         CSV parsing, stats, smoothing, outlier & seasonal helpers
-│   │   ├── charts.js       Chart.js chart builders
+│   │   ├── data.js         CSV parsing, stats, smoothing, outlier, seasonal & phenology-event helpers
+│   │   ├── charts.js       Chart.js chart builders (main, seasonal, weather) + PNG export
+│   │   ├── weather.js      Open-Meteo historical weather fetch (client-side, no key)
 │   │   ├── theme.js        Dark/light theme toggle
+│   │   ├── nav.js          Mobile hamburger menu
 │   │   ├── app.js          Dashboard controller
-│   │   └── explorer.js     Data explorer controller
-│   └── img/                Favicon + hero illustration (SVG, no external image deps)
+│   │   ├── explorer.js     Data explorer controller
+│   │   └── gallery.js      Snapshot gallery/timelapse controller
+│   └── img/                Favicon, hero illustration, OG image (all SVG, no external image deps)
 ├── data/
-│   └── phenocam_data.csv   Historical observation log
+│   ├── phenocam_data.csv   Historical observation log
+│   └── gallery/            One archived JPG per day + index.json manifest
 ├── pipeline/                Python extraction pipeline (refactored)
 │   ├── config.py           Constants: webcam URL, location, paths, thresholds
-│   ├── stream.py           Playwright stream interception + frame capture
+│   ├── stream.py           Playwright stream interception + snapshot-thumbnail fallback
 │   ├── phenology.py        GCC/RCC/BCC/ExG calculation + solar-elevation gate
 │   ├── outliers.py         Daily IQR outlier flagging
+│   ├── gallery.py          Archives one daily snapshot for the timelapse gallery
 │   ├── run.py               Main entrypoint (run every 30 min by CI)
 │   ├── archiver.py         Optional: archives one frame per run to phenology_images/
 │   ├── canopy_mask.png     Region-of-interest mask isolating canopy pixels

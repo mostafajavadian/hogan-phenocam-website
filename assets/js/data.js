@@ -125,7 +125,7 @@ export function seasonPhase(date) {
   return { label: "Dormant", note: "Late-season decline" };
 }
 
-function dayOfYear(date) {
+export function dayOfYear(date) {
   const start = new Date(date.getFullYear(), 0, 0);
   return Math.floor((date - start) / 86400000);
 }
@@ -159,6 +159,60 @@ export function seasonalOverlay(rows, field = "gcc_90th") {
     byYear.get(year).push({ x: dayOfYear(d.date), y: d.value });
   }
   return byYear;
+}
+
+/**
+ * Detects green-up (spring) and senescence (autumn) transition dates per year using a
+ * 50%-of-amplitude threshold crossing on a 5-day-smoothed daily GCC series -- a standard,
+ * simple phenocam method. Requires at least 20 daily observations in a year to attempt.
+ */
+export function detectPhenologyEvents(rows, field = "gcc_90th") {
+  const daily = dailySeries(rows, field);
+  const byYear = new Map();
+  for (const d of daily) {
+    const year = d.date.getFullYear();
+    if (!byYear.has(year)) byYear.set(year, []);
+    byYear.get(year).push(d);
+  }
+
+  const events = [];
+  for (const [year, series] of byYear) {
+    if (series.length < 20) {
+      events.push({ year, greenup: null, senescence: null, seasonLengthDays: null, insufficientData: true });
+      continue;
+    }
+
+    const values = series.map((d) => d.value);
+    const smoothed = movingAverage(values, 5);
+    const min = Math.min(...smoothed);
+    const max = Math.max(...smoothed);
+    const threshold = min + 0.5 * (max - min);
+    const peakIdx = smoothed.indexOf(max);
+
+    let greenup = null;
+    for (let i = 1; i <= peakIdx; i++) {
+      if (smoothed[i - 1] < threshold && smoothed[i] >= threshold) {
+        greenup = series[i].date;
+        break;
+      }
+    }
+
+    let senescence = null;
+    for (let i = smoothed.length - 1; i > peakIdx; i--) {
+      if (smoothed[i - 1] >= threshold && smoothed[i] < threshold) {
+        senescence = series[i].date;
+        break;
+      }
+    }
+
+    const seasonLengthDays = greenup && senescence
+      ? Math.round((senescence - greenup) / 86400000)
+      : null;
+
+    events.push({ year, greenup, senescence, seasonLengthDays, insufficientData: false });
+  }
+
+  return events.sort((a, b) => a.year - b.year);
 }
 
 export function toCsv(rows) {

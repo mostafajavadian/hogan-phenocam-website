@@ -31,6 +31,7 @@
     <div class="nav-links">
       <a href="index.html" class="nav-link active" aria-current="page">Dashboard</a>
       <a href="explorer.html" class="nav-link">Data Explorer</a>
+      <a href="gallery.html" class="nav-link">Gallery</a>
       <a href="methodology.html" class="nav-link">Methodology</a>
     </div>
     <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
@@ -45,6 +46,7 @@
   <div class="mobile-menu" id="mobile-menu">
     <a href="index.html" class="nav-link active" aria-current="page">Dashboard</a>
     <a href="explorer.html" class="nav-link">Data Explorer</a>
+    <a href="gallery.html" class="nav-link">Gallery</a>
     <a href="methodology.html" class="nav-link">Methodology</a>
     <a class="gh-link" href="https://github.com/mostafajavadian/hogan-phenocam-website" target="_blank" rel="noopener">
       <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
@@ -122,6 +124,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
             Reset zoom
           </button>
+          <button class="btn btn-ghost" id="export-chart-png-btn" title="Export chart as PNG">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+            Export PNG
+          </button>
         </div>
       </div>
       <div class="chart-wrap">
@@ -157,13 +163,56 @@
   <section class="section" style="padding-top:0;">
     <div class="section-head">
       <div>
-        <h2>Year-over-year seasonal comparison</h2>
-        <p>Daily GCC (90th percentile) plotted against day-of-year, overlaid across all recorded years.</p>
+        <h2>Weather context — Worcester, MA</h2>
+        <p>Daily mean temperature and precipitation from Open-Meteo, for the selected range above.</p>
       </div>
+    </div>
+    <div class="card">
+      <div class="chart-wrap short" id="weather-chart-wrap">
+        <canvas id="weather-chart"></canvas>
+      </div>
+      <div class="empty-state" id="weather-empty" style="display:none;">Weather data unavailable right now.</div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="section-head">
+      <div>
+        <h2>Year-over-year seasonal comparison</h2>
+        <p>Daily GCC (90th percentile) plotted against day-of-year, overlaid across all recorded years. Dashed lines mark detected green-up / senescence.</p>
+      </div>
+      <button class="btn btn-ghost" id="export-seasonal-png-btn" title="Export chart as PNG">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>
+        Export PNG
+      </button>
     </div>
     <div class="card">
       <div class="chart-wrap">
         <canvas id="seasonal-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="section-head">
+      <div>
+        <h2>Phenology events</h2>
+        <p>Green-up and senescence dates, detected where smoothed GCC crosses 50% of that year's seasonal amplitude.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-scroll">
+        <table class="data-table" id="phenology-events-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Green-up</th>
+              <th>Senescence</th>
+              <th>Growing season length</th>
+            </tr>
+          </thead>
+          <tbody id="phenology-events-body"></tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -189,6 +238,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <script type="module">
   import { initMobileNav } from "./assets/js/nav.js";
   initMobileNav();
