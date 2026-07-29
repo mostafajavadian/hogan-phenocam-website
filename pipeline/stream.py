@@ -21,12 +21,31 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 
+# The player runs a video-ad waterfall (Google Ad Exchange / 2mdn.net) before the
+# real live stream loads. In headless CI that waterfall can spin indefinitely
+# (observed: 1900+ requests in 24s, mostly retrying a failing ad), starving out the
+# actual .m3u8 request. Blocking these hosts lets the player fall through to content.
+AD_BLOCK_HOSTS = (
+    "googlesyndication.com",
+    "doubleclick.net",
+    "2mdn.net",
+    "googleadservices.com",
+    "google-analytics.com",
+    "googletagmanager.com",
+    "analytics.yahoo.com",
+    "amazon-adsystem.com",
+    "moatads.com",
+    "scorecardresearch.com",
+    "adservice.google",
+)
+
 
 async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
     """Loads the public webcam page and intercepts its token-protected HLS playlist URL.
 
-    Retries with a fresh page load if the first attempt doesn't see any playlist
-    request in time — CI network conditions are slower and less consistent than local dev.
+    Ad/tracking hosts are blocked so the player's ad waterfall doesn't stall out the
+    actual stream request; a single longer wait is used instead of reloading, since a
+    reload just restarts the waterfall from scratch instead of letting it resolve.
     """
     m3u8_url = None
     seen_urls: list[str] = []
@@ -34,6 +53,14 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page(user_agent=USER_AGENT)
+
+        async def block_ads(route):
+            if any(host in route.request.url for host in AD_BLOCK_HOSTS):
+                await route.abort()
+            else:
+                await route.continue_()
+
+        await page.route("**/*", block_ads)
 
         def handle_response(response):
             nonlocal m3u8_url
@@ -43,12 +70,11 @@ async def get_live_m3u8(page_url: str = config.WEBCAM_PAGE_URL) -> str | None:
 
         page.on("response", handle_response)
 
-        for attempt in range(config.STREAM_LOAD_RETRIES):
-            await page.goto(page_url, wait_until="domcontentloaded")
+        await page.goto(page_url, wait_until="domcontentloaded")
+        for _ in range(config.STREAM_LOAD_RETRIES):
             await page.wait_for_timeout(config.STREAM_LOAD_TIMEOUT_MS)
             if m3u8_url:
                 break
-            log.info("No playlist request seen on attempt %d/%d.", attempt + 1, config.STREAM_LOAD_RETRIES)
 
         await browser.close()
 
